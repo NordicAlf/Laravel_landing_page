@@ -14,9 +14,11 @@ class IndexController extends Controller
 {
     public function execute(Request $request)
     {
-      // Если отправлен пост-запрос
+      if (session('status')) {
+        $request->session()->forget('status');
+      }
       if ($request->isMethod('post')){
-
+        $_SESSION['abb'] = null;
         // Ошибки на случай, если неправильно введены данные
         $messages = [
           'required' => 'Поле :attribute обязательно к заполнению',
@@ -34,18 +36,16 @@ class IndexController extends Controller
         $data = $request->all();
         //dd($data);
         // Отправка сообщения из данных формы
-        $result = Mail::send('site.email', ['data'=>$data], function($message) use ($data) {
+        Mail::send('site.email', ['data'=>$data], function($message) use ($data) {
           // Почта куда приходят письма
           $mailAdmin = env('MAIL_ADMIN');
           // Данные для отправки
           $message->from($data['email'], $data['name']);
           // Куда отправить и название темы
           $message->to($mailAdmin)->subject('Question');
+          session(['status' => 'Email is send']);
+          return redirect()->route('home');
         });
-
-        if ($result) {
-          return redirect()->route('home')->with('status', 'Email is send');
-        }
 
       }
 
